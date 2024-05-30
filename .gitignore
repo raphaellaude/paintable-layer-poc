@@ -1,0 +1,17 @@
+.ipynb_checkpoints
+credentials
+.venv
+.ruff_cache
+__pycache__
+.DS_Store
+.vscode
+cors.json
+pyrightconfig.json
+.credentials
+.vercel
+scratch/
+.env
+*.swp
+logfile.log
+assets/
+

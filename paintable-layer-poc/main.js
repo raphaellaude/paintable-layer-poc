@@ -1,6 +1,9 @@
 import "./style.css";
 import { tableFromIPC } from "apache-arrow";
-import { parseField, parseVector } from "arrow-js-ffi";
+// import initWasm, { readSchema } from "parquet-wasm";
+
+// await initWasm();
+// import { parseField, parseVector } from "arrow-js-ffi";
 
 // const arrowJsFFI = await import(
 //   "https://unpkg.com/arrow-js-ffi@0.2.0/dist/arrow-js-ffi.umd.js"
@@ -17,15 +20,13 @@ const geoarrowModule = await import(
 
 // // Need to await the default export first to initialize the WebAssembly code
 const { memory } = await geoarrowModule.default();
+const geoarrow = geoarrowModule[0];
+const geoarrowMemory = geoarrowModule[1];
 
 import { MapboxOverlay as DeckOverlay } from "@deck.gl/mapbox";
-import { GeoJsonLayer, ArcLayer } from "@deck.gl/layers";
+import { SolidPolygonLayer } from "@deck.gl/layers";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-
-// source: Natural Earth http://www.naturalearthdata.com/ via geojson.xyz
-const AIR_PORTS =
-  "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_airports.geojson";
 
 // Set your Mapbox token here or via environment variable
 const MAPBOX_TOKEN = import.meta.env.VITE_MapboxAccessToken; // eslint-disable-line
@@ -40,43 +41,83 @@ const map = new mapboxgl.Map({
   pitch: 0,
 });
 
-const deckOverlay = new DeckOverlay({
-  // interleaved: true,
-  layers: [
-    new GeoJsonLayer({
-      id: "airports",
-      data: AIR_PORTS,
-      // Styles
-      filled: true,
-      pointRadiusMinPixels: 2,
-      pointRadiusScale: 2000,
-      getPointRadius: (f) => 11 - f.properties.scalerank,
-      getFillColor: [200, 0, 80, 180],
-      // Interactive props
-      pickable: true,
-      autoHighlight: true,
-      onClick: (info) =>
-        // eslint-disable-next-line
-        info.object &&
-        alert(
-          `${info.object.properties.name} (${info.object.properties.abbrev})`,
-        ),
-      // beforeId: 'waterway-label' // In interleaved mode render the layer under map labels
-    }),
-    new ArcLayer({
-      id: "arcs",
-      data: AIR_PORTS,
-      dataTransform: (d) =>
-        d.features.filter((f) => f.properties.scalerank < 4),
-      // Styles
-      getSourcePosition: (f) => [-0.4531566, 51.4709959], // London
-      getTargetPosition: (f) => f.geometry.coordinates,
-      getSourceColor: [0, 128, 200],
-      getTargetColor: [200, 0, 80],
-      getWidth: 1,
-    }),
-  ],
-});
+map.on("load", () => {
+  const getData = async () => {
+    const parquetPath = "./tl_2023_55_tabblock20.parquet";
+    const parquetBytes = new Uint8Array(
+      await fetch(parquetPath).then((response) => response.arrayBuffer()),
+    );
+    return parquetBytes;
+  };
 
-map.addControl(deckOverlay);
-map.addControl(new mapboxgl.NavigationControl());
+  const parquetBytes = getData();
+
+  console.log(parquetBytes);
+
+  const decodedArrowBytes = parquetModule.readParquet(parquetBytes, {
+    batchSize: Math.pow(2, 31),
+  });
+  const arrowTable = tableFromIPC(decodedArrowBytes.intoIPCStream());
+
+  console.log(arrowTable);
+  console.log(arrowTable.schema.fields[0]);
+
+  let geometryColumn = arrowTable.getChild("geometry");
+
+  console.log(geometryColumn);
+
+  // const flatCoordinateVector = geometryColumn
+  //     .getChildAt(0)
+  //     .getChildAt(0)
+  //     .getChildAt(0);
+
+  // let flatCoordinateArray = flatCoordinateVector.data[0].values;
+  let polygonOffsets = geometryColumn.getChildAt(0).data[0].valueOffsets;
+  let geomOffsets = geometryColumn.data[0].valueOffsets;
+
+  // const coordBuffer = geoarrow.CoordBuffer.from_interleaved_coords(
+  //     new geoarrow.InterleavedCoordBuffer(flatCoordinateArray)
+  //   );
+
+  // const polygonArray = new geoarrow.PolygonArray(
+  //     coordBuffer,
+  //     geomOffsets,
+  //     polygonOffsets
+  //   );
+
+  const resolvedIndices = new Int32Array(geomOffsets.length);
+  for (let i = 0; i < resolvedIndices.length; ++i) {
+    // Perform the lookup into the polygonOffsets array using the geomOffsets array
+    resolvedIndices[i] = polygonOffsets[geomOffsets[i]];
+  }
+
+  const data = {
+    // Number of geometries
+    length: geometryColumn.length,
+    // Indices into coordinateArray where each polygon starts
+    startIndices: resolvedIndices,
+    attributes: {
+      // Flat coordinates array
+      getPolygon: { value: flatCoordinateArray, size: 2 },
+      // Pass in the color values per coordinate vertex
+      getFillColor: { value: colorAttribute, size: 3 },
+    },
+  };
+  const layer = new SolidPolygonLayer({
+    // This is an Observable hack - changing the id will force the layer to refresh when the cell reevaluates
+    id: `layer-${Date.now()}`,
+    data,
+    // Skip normalization for binary data
+    _normalize: false,
+    // Counter-clockwise winding order
+    _windingOrder: "CCW",
+  });
+
+  const deckOverlay = new DeckOverlay({
+    // interleaved: true,
+    layers: [layer],
+  });
+
+  map.addControl(deckOverlay);
+  map.addControl(new mapboxgl.NavigationControl());
+});
