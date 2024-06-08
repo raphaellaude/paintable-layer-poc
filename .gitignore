@@ -14,4 +14,4 @@ scratch/
 *.swp
 logfile.log
 assets/
-
+*.parquet
