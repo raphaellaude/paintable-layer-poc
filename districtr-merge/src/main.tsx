@@ -2,6 +2,7 @@ import {
   isValidAutomergeUrl,
   Repo,
   RawString,
+  Array,
 } from "@automerge/automerge-repo";
 import { BrowserWebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket";
 import { BroadcastChannelNetworkAdapter } from "@automerge/automerge-repo-network-broadcastchannel";
@@ -21,11 +22,14 @@ const repo = new Repo({
 });
 
 const rootDocUrl = `${document.location.hash.substring(1)}`;
+
+type MyDoc = { counter: RawString; items?: Array<RawString> };
+
 let handle;
 if (isValidAutomergeUrl(rootDocUrl)) {
   handle = repo.find(rootDocUrl);
 } else {
-  handle = repo.create<{ counter?: RawString }>();
+  handle = repo.create<MyDoc>();
   handle.change((d) => (d.counter = new RawString("default")));
 }
 const docUrl = (document.location.hash = handle.url);
