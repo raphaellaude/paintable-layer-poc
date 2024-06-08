@@ -1,14 +1,15 @@
 import "./App.css";
 import { AutomergeUrl, RawString } from "@automerge/automerge-repo";
 import { useDocument } from "@automerge/automerge-repo-react-hooks";
+import { Assignments } from "./main";
 
-interface CounterDoc {
-  counter: RawString;
-  items?: RawString[];
+interface Plan {
+  name: RawString;
+  assignments: Assignments;
 }
 
 function App({ docUrl }: { docUrl: AutomergeUrl }) {
-  const [doc, changeDoc] = useDocument<CounterDoc>(docUrl);
+  const [doc, changeDoc] = useDocument<Plan>(docUrl);
 
   return (
     <>
@@ -18,19 +19,25 @@ function App({ docUrl }: { docUrl: AutomergeUrl }) {
           <div>
             <input
               onChange={(e) => {
-                changeDoc((d) => (d.counter = new RawString(e.target.value)));
+                changeDoc((d) => (d.name = new RawString(e.target.value)));
               }}
-              value={doc.counter.val}
+              value={doc.name ? doc.name.val : undefined}
             />
             <button
               onClick={(e) => {
                 e.preventDefault();
                 changeDoc((d) => {
-                  if (!d.items) {
-                    d.items = [];
+                  const key = doc.name.toString();
+                  console.log(key);
+                  const currentAssignment = d.assignments[key];
+                  console.log(currentAssignment);
+
+                  if (currentAssignment !== undefined) {
+                    d.assignments[key] = currentAssignment + 1;
+                  } else {
+                    d.assignments[key] = 1;
                   }
-                  d.items.push(new RawString(doc.counter.val));
-                  d.counter = new RawString("");
+                  d.name = new RawString("");
                 });
               }}
             >
@@ -38,18 +45,16 @@ function App({ docUrl }: { docUrl: AutomergeUrl }) {
             </button>
           </div>
         ) : null}
-        {doc && doc.items && doc.items.length > 0 ? (
+        {doc && doc.assignments ? (
           <ul>
-            {doc.items.map((item, index) => (
-              <li key={index}>{item.val}</li>
+            {Object.keys(doc.assignments).map((item, index) => (
+              <li key={index}>
+                {item}: {doc.assignments[item]}
+              </li>
             ))}
           </ul>
         ) : null}
-        <p>Open this page in another tab to watch the updates synchronize</p>
       </div>
-      <p className="read-the-docs">
-        Built with Automerge, Vite, React, and TypeScript
-      </p>
     </>
   );
 }

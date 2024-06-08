@@ -2,7 +2,7 @@ import {
   isValidAutomergeUrl,
   Repo,
   RawString,
-  Array,
+  // Array,
 } from "@automerge/automerge-repo";
 import { BrowserWebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket";
 import { BroadcastChannelNetworkAdapter } from "@automerge/automerge-repo-network-broadcastchannel";
@@ -23,14 +23,19 @@ const repo = new Repo({
 
 const rootDocUrl = `${document.location.hash.substring(1)}`;
 
-type MyDoc = { counter: RawString; items?: Array<RawString> };
+type MyDoc = { name: RawString; assignments: Assignments };
+
+export type Assignments = {
+  [key: string]: number;
+};
 
 let handle;
 if (isValidAutomergeUrl(rootDocUrl)) {
   handle = repo.find(rootDocUrl);
 } else {
   handle = repo.create<MyDoc>();
-  handle.change((d) => (d.counter = new RawString("default")));
+  handle.change((d) => (d.name = new RawString("default")));
+  handle.change((d) => (d.assignments = { default: 0 }));
 }
 const docUrl = (document.location.hash = handle.url);
 // @ts-expect-error -- we put the handle and the repo on window so you can experiment with them from the dev tools
