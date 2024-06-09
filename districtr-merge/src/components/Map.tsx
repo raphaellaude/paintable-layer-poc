@@ -19,12 +19,10 @@ function boxAround(point: Point, radius: number) {
 
 export default function Map({ docUrl }: { docUrl: AutomergeUrl }) {
   const [doc, changeDoc] = useDocument<Plan>(docUrl);
-  const [initialized, setInitialized] = useState(false);
   const mapContainer = useRef(null);
   const map = useRef(null);
 
   useEffect(() => {
-    setInitialized(false);
     const protocol = new Protocol();
     maplibregl.addProtocol("pmtiles", protocol.tile);
 
@@ -163,17 +161,6 @@ export default function Map({ docUrl }: { docUrl: AutomergeUrl }) {
             const newAssignment =
               assignment !== undefined ? d.assignments[key] + 1 : 0;
             d.assignments[key] = newAssignment;
-            map.current.setFeatureState(
-              {
-                source: "wisconsin_blocks",
-                sourceLayer: "tl_2023_55_tabblock20",
-                id: key,
-              },
-              {
-                // ...feat.state,
-                color: newAssignment % 5,
-              },
-            );
           });
         });
       }
@@ -186,7 +173,7 @@ export default function Map({ docUrl }: { docUrl: AutomergeUrl }) {
   }, []);
 
   useEffect(() => {
-    if (doc && map && !initialized) {
+    if (doc && map) {
       Object.entries(doc.assignments).forEach(([key, value]) => {
         map.current.setFeatureState(
           {
@@ -199,9 +186,8 @@ export default function Map({ docUrl }: { docUrl: AutomergeUrl }) {
           },
         );
       });
-      setInitialized(true);
     }
-  }, [doc, map, initialized, setInitialized]);
+  }, [doc, map]);
 
   return (
     <>
