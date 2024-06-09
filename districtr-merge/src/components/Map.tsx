@@ -104,7 +104,17 @@ export default function Map({ docUrl }: { docUrl: AutomergeUrl }) {
         "source-layer": "tl_2023_55_tabblock20",
         paint: {
           "line-color": "#cccccc",
-          "line-width": 1,
+          "line-width": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            7,
+            0.1,
+            11,
+            1,
+            21,
+            2,
+          ],
         },
       });
     });
