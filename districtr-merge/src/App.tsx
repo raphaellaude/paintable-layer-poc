@@ -2,8 +2,9 @@ import "./App.css";
 import { AutomergeUrl, RawString } from "@automerge/automerge-repo";
 import { useDocument } from "@automerge/automerge-repo-react-hooks";
 import { Assignments } from "./main";
+import Map from "./components/Map";
 
-interface Plan {
+export interface Plan {
   name: RawString;
   assignments: Assignments;
 }
@@ -13,8 +14,7 @@ function App({ docUrl }: { docUrl: AutomergeUrl }) {
 
   return (
     <>
-      <h1>Meet Automerge</h1>
-      <div className="card">
+      <div id="sidebar">
         {doc ? (
           <div>
             <input
@@ -55,6 +55,7 @@ function App({ docUrl }: { docUrl: AutomergeUrl }) {
           </ul>
         ) : null}
       </div>
+      <Map docUrl={docUrl} />
     </>
   );
 }

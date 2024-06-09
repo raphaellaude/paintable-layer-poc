@@ -15,3 +15,5 @@ scratch/
 logfile.log
 assets/
 *.parquet
+*.geojson
+*.pmtiles
