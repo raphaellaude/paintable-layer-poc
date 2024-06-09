@@ -15,6 +15,8 @@
     "@automerge/automerge-repo-network-websocket": "^1.1.12",
     "@automerge/automerge-repo-react-hooks": "^1.1.12",
     "@automerge/automerge-repo-storage-indexeddb": "^1.1.12",
+    "@duckdb/duckdb-wasm": "^1.28.1-dev106.0",
+    "apache-arrow": "^16.1.0",
     "maplibre-gl": "^4.3.2",
     "pmtiles": "^3.0.6",
     "react": "^18.2.0",
