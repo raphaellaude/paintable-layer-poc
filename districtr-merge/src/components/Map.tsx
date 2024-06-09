@@ -33,7 +33,7 @@ export default function Map({ docUrl }: { docUrl: AutomergeUrl }) {
         sources: {
           wisconsin_blocks: {
             type: "vector",
-            url: "pmtiles:///wisconsin_blocks.pmtiles",
+            url: "pmtiles:///wisconsin_blocks_dontcoalesce.pmtiles",
             promoteId: "geoid",
           },
         },
@@ -48,9 +48,9 @@ export default function Map({ docUrl }: { docUrl: AutomergeUrl }) {
         ],
       },
       center: [-89.6787214, 44.3140374],
-      zoom: 9,
+      zoom: 7,
       maxZoom: 20.9,
-      minZoom: 9,
+      minZoom: 7,
     });
 
     map.current.on("load", () => {

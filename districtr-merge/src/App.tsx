@@ -1,6 +1,6 @@
 import "./App.css";
 import { AutomergeUrl, RawString } from "@automerge/automerge-repo";
-import { useDocument } from "@automerge/automerge-repo-react-hooks";
+// import { useDocument } from "@automerge/automerge-repo-react-hooks";
 import { Assignments } from "./main";
 import Map from "./components/Map";
 
@@ -10,12 +10,12 @@ export interface Plan {
 }
 
 function App({ docUrl }: { docUrl: AutomergeUrl }) {
-  const [doc, changeDoc] = useDocument<Plan>(docUrl);
+  // const [doc, changeDoc] = useDocument<Plan>(docUrl);
 
   return (
     <>
       <div id="sidebar">
-        {doc ? (
+        {/* {doc ? (
           <div>
             <input
               onChange={(e) => {
@@ -53,7 +53,7 @@ function App({ docUrl }: { docUrl: AutomergeUrl }) {
               </li>
             ))}
           </ul>
-        ) : null}
+        ) : null} */}
       </div>
       <Map docUrl={docUrl} />
     </>
